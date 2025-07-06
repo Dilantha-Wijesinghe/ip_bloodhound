@@ -1,12 +1,12 @@
 # IP Port Scanner
 
-A fast, multi-threaded TCP port scanner written in Rust for network reconnaissance and security testing.
+A fast, async TCP port scanner written in Rust for network reconnaissance and security testing.
 
 ## Features
 
-- **Multi-threaded scanning**: Configurable thread count for optimal performance
-- **Full port range**: Scans all TCP ports (1-65535)
-- **IPv4 and IPv6 support**: Compatible with both IP address formats
+- **Async concurrent scanning**: Uses Tokio for high-performance async operations
+- **Customizable port range**: Scan specific port ranges or full range (1-65535)
+- **Flexible addressing**: Support for IPv4 and IPv6 addresses with fallback to localhost
 - **Real-time feedback**: Visual progress indicators during scanning
 - **Clean output**: Sorted list of open ports after completion
 
@@ -33,11 +33,14 @@ cargo build
 # Quick syntax check
 cargo check
 
-# Run with default settings (4 threads)
-cargo run -- <ip_address>
+# Run with default settings (full port range on localhost)
+cargo run
 
-# Run with custom thread count
-cargo run -- -j <thread_count> <ip_address>
+# Scan specific IP address
+cargo run -- -a <ip_address>
+
+# Scan with custom port range
+cargo run -- -s <start_port> -e <end_port> <ip_address>
 
 # Show help
 cargo run -- -h
@@ -46,11 +49,17 @@ cargo run -- -h
 ### Examples
 
 ```bash
-# Scan localhost with default 4 threads
-cargo run -- 127.0.0.1
+# Scan localhost (default behavior)
+cargo run
 
-# Scan remote IP with 8 threads
-cargo run -- -j 8 192.168.1.1
+# Scan specific IP address
+cargo run -- -a 192.168.1.1
+
+# Scan specific port range on localhost
+cargo run -- -s 80 -e 443
+
+# Scan custom range on remote IP
+cargo run -- -a 192.168.1.1 -s 20 -e 25
 
 # Show help message
 cargo run -- -h
@@ -58,23 +67,26 @@ cargo run -- -h
 
 ## How It Works
 
-The scanner uses a multi-threaded approach to efficiently scan all 65,535 TCP ports:
+The scanner uses an async concurrent approach built on Tokio:
 
-1. **Thread Distribution**: Each thread scans every nth port (where n = thread count)
-   - Thread 1: ports 1, 5, 9, 13...
-   - Thread 2: ports 2, 6, 10, 14...
-   - Thread 3: ports 3, 7, 11, 15...
-   - And so on...
-
-2. **Connection Testing**: Attempts TCP connections to each port
-3. **Result Collection**: Uses channels to safely collect results from all threads
+1. **Task Spawning**: Each port gets its own async task using `tokio::task::spawn`
+2. **Connection Testing**: Attempts TCP connections to each port concurrently
+3. **Result Collection**: Uses mpsc channels to safely collect results from all tasks
 4. **Output**: Displays open ports in sorted order
+
+## Command Line Options
+
+- `-a, --address <ADDRESS>`: IP address to scan (defaults to 127.0.0.1)
+- `-s, --start <PORT>`: Starting port number (defaults to 1, must be > 0)
+- `-e, --end <PORT>`: Ending port number (defaults to 65535, must be ≤ 65535)
+- `-h, --help`: Show help information
 
 ## Performance
 
-- **Default threads**: 4 (balanced performance)
-- **Scan time**: Varies by target (localhost: seconds, remote: minutes)
+- **Concurrency**: Each port scanned in its own async task
+- **Scan time**: Varies by target and port range (localhost: seconds, remote: minutes)
 - **Progress indicator**: Dots printed for each open port found
+- **Memory efficient**: Uses async tasks instead of OS threads
 
 ## Security Considerations
 
@@ -90,9 +102,9 @@ The scanner uses a multi-threaded approach to efficiently scan all 65,535 TCP po
 ### Code Structure
 
 - `src/main.rs`: Main application logic
-- `Arguments` struct: Command-line argument parsing
-- `scan()` function: Core port scanning logic
-- Multi-threaded architecture with mpsc channels
+- `Arguments` struct: Command-line argument parsing using `bpaf`
+- `scan()` function: Core async port scanning logic
+- Async architecture with Tokio runtime and mpsc channels
 
 ### Development Commands
 
