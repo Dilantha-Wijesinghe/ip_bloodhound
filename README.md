@@ -17,7 +17,7 @@ A fast, async TCP port scanner written in Rust for network reconnaissance and se
 
 ### Build from source
 ```bash
-git clone https://github.com/Dilantha-Wijesinghe/ip_sniffer.git
+git clone https://github.com/Dilantha-Wijesinghe/ip_bloodhound.git
 cd ip_sniffer
 cargo build --release
 ```
