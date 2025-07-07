@@ -1,4 +1,11 @@
 # IP Port Scanner
+```
+               __
+              /\/'-,
+      ,--'''''   /"
+____,'.  )       \___
+'"""""------'"""`-----'
+```
 
 A fast, async TCP port scanner written in Rust for network reconnaissance and security testing.
 
